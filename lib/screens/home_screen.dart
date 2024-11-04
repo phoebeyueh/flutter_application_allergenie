@@ -10,19 +10,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _questionController = TextEditingController();
+  final TextEditingController _allergyController = TextEditingController();
+  final TextEditingController _dishTypeController = TextEditingController();
   final ApiService _apiService = ApiService();
   String _recipe = "";
-  bool _isLoading = false; 
+  bool _isLoading = false;
 
   Future<void> _getRecipe() async {
-    if (_questionController.text.isEmpty) return;
+    if (_allergyController.text.isEmpty || _dishTypeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill out both fields.')),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
-    final request = RecipeRequest(question: _questionController.text);
+    // combine two inputs into the question
+    final request = RecipeRequest(
+      allergy: _allergyController.text,
+      dish_type: _dishTypeController.text,
+    );
+
     final response = await _apiService.generateRecipe(request);
 
     setState(() {
@@ -34,22 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch, 
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Question Banner
             _buildBanner(),
             const SizedBox(height: 16),
             TextField(
-              controller: _questionController,
+              controller: _allergyController,
               decoration: InputDecoration(
-                labelText: 'Ask for a recipe (e.g., allergy-friendly)',
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 122, 70, 131)), 
+                labelText: 'Enter Your Allergy (e.g., gluten, dairy, treenuts)',
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 122, 70, 131)),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0), 
+                  borderRadius: BorderRadius.circular(10.0),
                   borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131)),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -57,7 +68,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131), width: 2.0),
                 ),
                 filled: true,
-                fillColor: Colors.purple[50], 
+                fillColor: Colors.purple[50],
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _dishTypeController,
+              decoration: InputDecoration(
+                labelText: 'Enter Meal Type (e.g., dessert, main course) or Cuisine Type (e.g., Italian, Japanese, Asian)',
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 122, 70, 131)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131), width: 2.0),
+                ),
+                filled: true,
+                fillColor: Colors.purple[50],
               ),
             ),
             const SizedBox(height: 16),
@@ -65,33 +94,34 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _getRecipe,
               child: const Text('Generate Recipe', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 122, 70, 131), 
+                backgroundColor: const Color.fromARGB(255, 122, 70, 131),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16.0), 
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), 
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
               ),
             ),
+            
             // Spinner Animation
             const SizedBox(height: 16),
             _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(const Color.fromARGB(255, 122, 70, 131)), 
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(const Color.fromARGB(255, 122, 70, 131)),
                     ),
                   )
                 : Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Colors.white, 
-                        borderRadius: BorderRadius.circular(10.0), 
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10.0),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.grey,
                             blurRadius: 8.0,
-                            offset: Offset(0, 4), 
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
@@ -100,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               _recipe,
-                              style: const TextStyle(fontSize: 12), 
+                              style: const TextStyle(fontSize: 12),
                             ),
                             const SizedBox(height: 16),
                             if (_recipe.isNotEmpty) _buildDisclaimerBanner(),
@@ -122,8 +152,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Center(
           child: Image.asset(
             'assets/images/logo.png',
-            height: 100, 
-            fit: BoxFit.contain, 
+            height: 100,
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(height: 8),
@@ -143,18 +173,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDisclaimerBanner() {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(vertical: 10.0), 
+      margin: const EdgeInsets.symmetric(vertical: 10.0),
       decoration: BoxDecoration(
-        color: Colors.yellow[100], 
+        color: Colors.yellow[100],
         borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: Colors.orange, width: 2.0), 
+        border: Border.all(color: Colors.orange, width: 2.0),
       ),
       child: const Text(
         "Disclaimer: For optimal safety and accuracy, we recommend consulting with your healthcare provider regarding the suitability of AllerGenie's recipe to avoid any potential health risks.",
         style: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.bold, 
-          color: Colors.black, 
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
         ),
         textAlign: TextAlign.center,
       ),

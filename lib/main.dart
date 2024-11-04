@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 void main() {
   runApp(RecipeGeneratorApp());
@@ -21,3 +19,5 @@ class RecipeGeneratorApp extends StatelessWidget {
     );
   }
 }
+
+
