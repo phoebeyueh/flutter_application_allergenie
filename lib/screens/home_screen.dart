@@ -12,9 +12,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _allergyController = TextEditingController();
   final TextEditingController _dishTypeController = TextEditingController();
+  final TextEditingController _numRecipesController = TextEditingController();
   final ApiService _apiService = ApiService();
-  String _recipe = "";
+  List<String> _recipes = [];
   bool _isLoading = false;
+
+  // Default number of recipes to be fetched
+  final int _defaultNumRecipes = 1;
 
   Future<void> _getRecipe() async {
     if (_allergyController.text.isEmpty || _dishTypeController.text.isEmpty) {
@@ -28,16 +32,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = true;
     });
 
-    // combine two inputs into the question
+    // Get the number of recipes to generate
+    final numRecipes = int.tryParse(_numRecipesController.text) ?? _defaultNumRecipes;
+
     final request = RecipeRequest(
       allergy: _allergyController.text,
       dish_type: _dishTypeController.text,
+      num_recipes: numRecipes,
     );
 
     final response = await _apiService.generateRecipe(request);
 
     setState(() {
-      _recipe = response?.recipe ?? "No recipe found.";
+      if (response != null) {
+        _recipes = response.recipes;
+      } else {
+        _recipes = ["No recipe found."];
+      }
       _isLoading = false;
     });
   }
@@ -90,6 +101,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            TextField(
+              controller: _numRecipesController,
+              decoration: InputDecoration(
+                labelText: 'Number of Recipes (optional)',
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 122, 70, 131)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 122, 70, 131), width: 2.0),
+                ),
+                filled: true,
+                fillColor: Colors.purple[50],
+              ),
+            ),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _getRecipe,
               child: const Text('Generate Recipe', style: TextStyle(fontSize: 16)),
@@ -102,13 +131,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            
+
             // Spinner Animation
             const SizedBox(height: 16),
             _isLoading
                 ? Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(const Color.fromARGB(255, 122, 70, 131)),
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(const Color.fromARGB(255, 122, 70, 131)),
                     ),
                   )
                 : Expanded(
@@ -128,12 +157,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            Text(
-                              _recipe,
+                            ..._recipes.map((recipe) => Text(
+                              recipe,
                               style: const TextStyle(fontSize: 12),
-                            ),
+                            )),
                             const SizedBox(height: 16),
-                            if (_recipe.isNotEmpty) _buildDisclaimerBanner(),
+                            if (_recipes.isNotEmpty) _buildDisclaimerBanner(),
                           ],
                         ),
                       ),
